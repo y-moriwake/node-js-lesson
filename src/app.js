@@ -3,6 +3,11 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const mysql = require('mysql');
 const app = express();
+const Todo = require('./model/Todo');
+const TodoRepository = require('./repository/TodoRepository');
+const TodoService = require('./service/TodoService');
+const TodoController = require('./controller/TodoController');
+
 
 ////#region サーバ設定
 
@@ -11,7 +16,7 @@ const app = express();
 // mysql接続設定
 
 const connection = mysql.createConnection({
-    host:'localhost',
+    host: 'localhost',
     port: 3306,
     user: 'user',
     password: 'password',
@@ -25,6 +30,9 @@ connection.connect((err) => {
 
 ////#endregion
 
+const todo = new Todo(1, 'test title', 'test descriotion');
+console.log(todo);
+
 // サーバー設定
 const server = app.listen(4000, () => {
     console.log('Node.js is listening to PORT:' + server.address().port);
@@ -36,28 +44,10 @@ app.use(cors()).use(bodyParser.json());
 
 ////#endregion
 
-// getリクエスト
-app.get('/', (req, res, next) => {
-    const sql = 'select * from todos where `id` = 2';
-    connection.query(sql, (err, results) => {
-        if(err) throw err;
-        res.json(results);
-    });
-});
+const todoRepository = new TodoRepository(connection);
+const todoService = new TodoService(todoRepository);
+const todoController = new TodoController(todoService);
+const todoUrl = '/api/todos'
 
-// getリクエスト(id指定)
-app.get('/:id', (req, res, next) => {
-    const id = parseInt(req.params.id);
-    const sql = 'select * from todos where ?';
-    connection.query(sql, {id: id},(err, results) => {
-        if(err) throw err;
-        res.json(results[0]);
-    });
-});
-
-// // Postリクエスト
-// app.post('/', (req, res, next) => {
-//     const data = req.body;
-//     console.log(data);
-//     res.json(data);
-// });
+// todoCOntrollerのルーティングを利用する
+app.use(todoUrl, todoController.router);

@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors'
 import { Todo } from './model/Todo'
 import { TodoRepositoryImpl } from "./repository/impl/TodoRepositoryImpl";
+import { TodoServiceImpl } from "./service/impl/TodoServiceImpl";
 
 const app = express();
 
@@ -57,26 +58,27 @@ connection.connect((err) => {
 
 // インスタンス生成
 const todoRepository = new TodoRepositoryImpl(connection);
+const TodoService = new TodoServiceImpl(todoRepository);
 
 //#region APIのエンドポイント(APIに接続するためのURL)を設定
 
 // todoすべてを取得する
 app.get("/api/todos", async (req: Request, res: Response, next: NextFunction) => {
-  const todos = await todoRepository.getAll()
+  const todos = await TodoService.getAll()
   res.json(todos);
 });
 
 // todo1件を取得する
 app.get("/api/todos/:id", async (req: Request, res: Response, next: NextFunction) => {
   const id = parseInt(req.params.id);
-  const todo = await todoRepository.get(id);
+  const todo = await TodoService.get(id);
   res.status(201).json(todo);
 });
 
 // todo1件を作成する
 app.post("/api/todos", async (req: Request, res: Response, next: NextFunction) => {
   const todo = req.body;
-  const result = await todoRepository.create(todo);
+  const result = await TodoService.create(todo);
   res.status(201).json(result);
 });
 
@@ -84,14 +86,14 @@ app.post("/api/todos", async (req: Request, res: Response, next: NextFunction) =
 app.put("/api/todos/:id", async (req: Request, res: Response, next: NextFunction) => {
   const id = parseInt(req.params.id);
   const todo = req.body;
-  await todoRepository.update(id, todo);
+  await TodoService.update(id, todo);
   res.status(200).send();
 });
 
 // todo1件を削除する
 app.delete("/api/todos/:id", async (req: Request, res: Response, next: NextFunction) => {
   const id = parseInt(req.params.id);
-  const result = await todoRepository.delete(id);
+  const result = await TodoService.delete(id);
   res.status(200).send();
 });
 
